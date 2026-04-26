@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voter Eligibility Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f1117;
+      --paper: #f5f2eb;
+      --accent: #c0392b;
+      --accent-light: #f9e8e7;
+      --eligible: #1a6b3a;
+      --eligible-bg: #e6f4ec;
+      --ineligible: #9b3a27;
+      --ineligible-bg: #faeae8;
+      --border: #d4cfc4;
+      --muted: #7a7468;
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,0,0,0.04) 28px),
+        repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(0,0,0,0.02) 28px);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .flag-bar {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 1.2rem;
+    }
+
+    .flag-stripe {
+      width: 36px;
+      height: 6px;
+      border-radius: 2px;
+    }
+    .s1 { background: #ff9933; }
+    .s2 { background: #1a1a1a; }
+    .s3 { background: #138808; }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      letter-spacing: 2px;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 0.4rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      width: 100%;
+      max-width: 700px;
+      box-shadow: 4px 4px 0 var(--border);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      letter-spacing: 0.03em;
+    }
+
+    button:active { transform: translate(2px, 2px); box-shadow: none !important; }
+
+    #addBtn {
+      background: var(--accent);
+      color: #fff;
+      border: 1.5px solid var(--accent);
+      box-shadow: 3px 3px 0 #8c2316;
+    }
+    #addBtn:hover { background: #a93226; }
+
+    #clearBtn {
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      box-shadow: 3px 3px 0 var(--border);
+    }
+    #clearBtn:hover { background: #f5f2eb; }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+    }
+
+    .empty-state .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead tr {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    thead th {
+      padding: 11px 16px;
+      text-align: left;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      animation: rowIn 0.3s ease both;
+    }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #faf8f4; }
+
+    td {
+      padding: 12px 16px;
+      color: var(--ink);
+    }
+
+    td:first-child { font-weight: 500; }
+
+    .sno {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 400 !important;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .eligible {
+      background: var(--eligible-bg);
+      color: var(--eligible);
+      border: 1px solid #b2d8c2;
+    }
+
+    .ineligible {
+      background: var(--ineligible-bg);
+      color: var(--ineligible);
+      border: 1px solid #e8bdb8;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .eligible .dot { background: var(--eligible); }
+    .ineligible .dot { background: var(--ineligible); }
+
+    .summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding: 10px 16px;
+      background: #faf8f4;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .summary-bar strong { color: var(--ink); }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="flag-bar">
+      <div class="flag-stripe s1"></div>
+      <div class="flag-stripe s2"></div>
+      <div class="flag-stripe s3"></div>
+    </div>
+    <h1>Voter <span>Eligibility</span> Checker</h1>
+    <p class="subtitle">Citizens must be 18 years or older to vote</p>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <button id="addBtn" onclick="addVoter()">+ Add Voter</button>
+      <button id="clearBtn" onclick="clearAll()">Clear All</button>
+    </div>
+
+    <div id="tableWrapper">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">🗳️</div>
+        <p>No voters added yet.<br>Click <strong>Add Voter</strong> to begin.</p>
+      </div>
+
+      <table id="voterTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Eligibility</th>
+          </tr>
+        </thead>
+        <tbody id="voterBody"></tbody>
+      </table>
+    </div>
+
+    <div class="summary-bar" id="summaryBar" style="display:none;">
+      <span>Total voters: <strong id="totalCount">0</strong></span>
+      <span>Eligible: <strong id="eligibleCount" style="color:var(--eligible)">0</strong></span>
+      <span>Not eligible: <strong id="ineligibleCount" style="color:var(--ineligible)">0</strong></span>
+    </div>
+  </div>
+
+  <footer>Voter Registration System &mdash; Eligibility age: 18+</footer>
+
+  <script>
+    let voters = [];
+
+    function addVoter() {
+      let name = prompt("Enter voter's full name:");
+      if (name === null) return;
+      name = name.trim();
+      if (!name) { alert("Name cannot be empty. Please try again."); return; }
+
+      let ageInput = prompt("Enter " + name + "'s age:");
+      if (ageInput === null) return;
+      let age = parseInt(ageInput);
+      if (isNaN(age) || age <= 0 || age > 120) {
+        alert("Please enter a valid age (1–120).");
+        return;
+      }
+
+      voters.push({ name, age });
+      renderTable();
+    }
+
+    function renderTable() {
+      const body = document.getElementById('voterBody');
+      const table = document.getElementById('voterTable');
+      const empty = document.getElementById('emptyState');
+      const summary = document.getElementById('summaryBar');
+
+      body.innerHTML = '';
+
+      if (voters.length === 0) {
+        table.style.display = 'none';
+        empty.style.display = 'block';
+        summary.style.display = 'none';
+        return;
+      }
+
+      table.style.display = 'table';
+      empty.style.display = 'none';
+      summary.style.display = 'flex';
+
+      let eligible = 0;
+      voters.forEach(function(v, i) {
+        let canVote = v.age >= 18;
+        if (canVote) eligible++;
+        let tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td class="sno">' + (i + 1) + '</td>' +
+          '<td>' + escHtml(v.name) + '</td>' +
+          '<td>' + v.age + '</td>' +
+          '<td>' +
+            '<span class="badge ' + (canVote ? 'eligible' : 'ineligible') + '">' +
+              '<span class="dot"></span>' +
+              (canVote ? 'Eligible to Vote' : 'Not Eligible') +
+            '</span>' +
+          '</td>';
+        body.appendChild(tr);
+      });
+
+      document.getElementById('totalCount').textContent = voters.length;
+      document.getElementById('eligibleCount').textContent = eligible;
+      document.getElementById('ineligibleCount').textContent = voters.length - eligible;
+    }
+
+    function clearAll() {
+      if (voters.length === 0) return;
+      if (confirm("Clear all " + voters.length + " voter(s)?")) {
+        voters = [];
+        renderTable();
+      }
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
